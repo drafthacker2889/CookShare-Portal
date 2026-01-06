@@ -1,0 +1,19 @@
+name: Deploy CookShare to Azure Storage
+
+on:
+  push:
+    branches:
+      - main  # This triggers the action every time you push to 'main'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Upload to Azure Blob Storage
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az storage blob upload-batch --account-name stcookshareshazin --auth-mode key --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" --destination '$web' --source . --overwrite
