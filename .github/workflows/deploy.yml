@@ -3,7 +3,7 @@ name: Deploy CookShare to Azure Storage
 on:
   push:
     branches:
-      - main  # This triggers the action every time you push to 'main'
+      - main  # This trigger the action every time you push to 'main'
 
 jobs:
   build-and-deploy:
