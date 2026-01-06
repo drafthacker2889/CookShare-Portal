@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CookShare | Discover Recipes</title>
+    <link rel="stylesheet" href="CSS/bootstrap.min.css">
+    <link rel="stylesheet" href="CSS/styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">CookShare</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="index.html">Home</a>
+                <a class="btn btn-outline-light ms-2" href="/.auth/login/github">Login with GitHub</a>
+                <a class="btn btn-primary ms-2" href="portal.html">Management Portal</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="jumbotron text-center p-5 bg-light border rounded shadow-sm">
+            <h1 class="display-4 fw-bold">Discover & Share Amazing Recipes</h1>
+            <p class="lead">Search our global database or upload your own creations to the cloud.</p>
+            <div class="input-group mb-3 w-75 mx-auto">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by ingredient or title (e.g., Pasta)...">
+                <button class="btn btn-primary px-4" onclick="searchRecipes()">🔍 Search</button>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-5">
+            <h2>Global Recipe Gallery</h2>
+            <button class="btn btn-sm btn-outline-secondary" onclick="fetchAll()">View All</button>
+        </div>
+        <hr>
+        <div id="gallery" class="row"></div>
+    </div>
+
+    <script src="JS/jquery-3.6.0.min.js"></script>
+    <script src="JS/bootstrap.js"></script>
+    <script src="JS/app.js"></script>
+</body>
+</html>
