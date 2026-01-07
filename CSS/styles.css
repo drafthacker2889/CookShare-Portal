@@ -1,6 +1,6 @@
 /* Custom Hero Background for Home Page */
 .jumbotron {
-    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('../Assets/hero-bg.jpg');
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)) ;
     background-size: cover;
     color: white !important;
 }
