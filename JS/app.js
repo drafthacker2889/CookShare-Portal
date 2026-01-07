@@ -183,25 +183,23 @@ async function deleteRecipe(id, userId) {
 // --- 5. MODALS & UI ---
 
 function viewRecipe(title, ingredients, steps, imageUrl, userId, ts, aiDesc) {
-    // Tracking specific recipe interest
     if (window.appInsights) {
         appInsights.trackEvent({ name: 'ViewRecipeDetails', properties: { recipeTitle: title, viewedBy: currentUser || 'Guest' } });
     }
 
     $("#view-title").text(title);
-    // Display fix for complex instructions
-    $("#view-ingredients").text(ingredients.replace(/\\n/g, '\n'));
-    $("#view-steps").text(steps.replace(/\\n/g, '\n'));
+
+    // JS Fix: Replace characters and use .html()
+    $("#view-ingredients").html(ingredients.replace(/\n/g, '<br>'));
+    $("#view-steps").html(steps.replace(/\n/g, '<br>'));
+    
     $("#view-user").text(userId);
     $("#view-time").text(formatTime(ts));
     $("#view-image").attr("src", imageUrl || DEFAULT_IMG);
-    
-    // Advanced Feature: AI Tagging Display
     $("#view-ai").text(aiDesc || "Analyzing image features..."); 
 
     new bootstrap.Modal(document.getElementById('viewModal')).show();
 }
-
 function editRecipe(id, userId, title, ingredients, steps, imageUrl) {
     $("#edit-id").val(id); 
     $("#edit-userId").val(userId); 
@@ -223,36 +221,27 @@ function renderRecipes(data) {
         return;
     }
 
+    // --- Inside your renderRecipes loop ---
     data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
         const sT = cleanString(recipe.title);
         const sI = cleanString(recipe.ingredients);
         const sS = cleanString(recipe.steps);
-        const sAI = cleanString(recipe.aiDescription); // Pull AI insight from database
-        const img = recipe.imageUrl || DEFAULT_IMG;
-        const ts = recipe._ts || 0;
-
-        let adminButtons = '';
-        if (window.location.pathname.endsWith('portal.html')) {
-            adminButtons = `
-                <div class="mt-3 text-center border-top pt-2">
-                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${sI}','${sS}','${img}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteRecipe('${recipe.id}','${recipe.userId}')">Delete</button>
-                </div>`;
-        }
+        const sAI = cleanString(recipe.aiDescription);
+        
+        // NEW: Create a clean preview for the tile by replacing \n with a space
+        const previewText = sI.replace(/\\n/g, ' ').replace(/\n/g, ' '); 
 
         gallery.append(`
             <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm border-0">
-                    <div style="cursor:pointer;" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
-                        <img src="${img}" class="card-img-top" style="height:180px; object-fit:cover;" onerror="this.src='${DEFAULT_IMG}'">
+                <div class="card h-100 shadow-sm border-0 recipe-card">
+                    <div style="cursor:pointer;" onclick="viewRecipe('${sT}','${sI}','${sS}','${recipe.imageUrl}', '${recipe.userId}', ${recipe._ts}, '${sAI}')">
+                        <img src="${recipe.imageUrl || DEFAULT_IMG}" class="card-img-top" style="height:180px; object-fit:cover;">
                         <div class="card-body pb-0">
                             <h6 class="card-title fw-bold mb-1">${recipe.title || "Untitled"}</h6>
-                            <p class="text-muted small mb-1">🕒 ${formatTime(ts)}</p>
-                            <p class="card-text small text-muted">${sI.substring(0, 60)}...</p>
+                            <p class="text-muted small mb-1">🕒 ${formatTime(recipe._ts)}</p>
+                            
+                            <p class="card-text small text-muted">${previewText.substring(0, 60)}...</p>
                         </div>
-                    </div>
-                    <div class="card-body pt-0">
-                        ${adminButtons}
                     </div>
                 </div>
             </div>`);
