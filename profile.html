@@ -8,20 +8,15 @@
     <link rel="stylesheet" href="CSS/styles.css">
 </head>
 <body class="bg-light">
-
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" href="index.html">🍳 CookShare</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="index.html">Home</a>
-                    <a class="nav-link active" href="profile.html">My Profile</a>
-                    <a class="nav-link" href="portal.html">Management Portal</a>
-                    <a id="loginLink" class="nav-link text-info" href="#" onclick="login()">Login</a>
-                    <a id="logoutLink" class="nav-link text-warning" href="#" onclick="logout()" style="display:none;">Logout</a>                </div>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link active" href="profile.html">My Profile</a>
+                <a class="nav-link" href="portal.html">Management Portal</a>
+                <a id="loginLink" class="nav-link text-info" href="#" onclick="login()">Login</a>
+                <a id="logoutLink" class="nav-link text-warning" href="#" onclick="logout()" style="display:none;">Logout</a>
             </div>
         </div>
     </nav>
@@ -33,16 +28,15 @@
                     👤
                 </div>
                 <h2 id="profile-name" class="fw-bold mb-1">Guest User</h2>
-                <p id="profile-email" class="text-muted mb-3">Loading identity from Azure...</p>
+                <p id="profile-email" class="text-muted mb-3">CookShare Local Identity</p>
                 
                 <div id="login-required" class="alert alert-info d-none mx-auto" style="max-width: 500px;">
-                    <strong>Identity Required:</strong> To view your personal contributions, please 
-                    <a href="/.auth/login/github" class="alert-link">Login with GitHub</a>.
+                    <strong>Notice:</strong> Please <a href="#" onclick="login()" class="alert-link">Login</a> to see your recipes.
                 </div>
             </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold m-0">My Recipe Collection</h3>
             <span class="badge bg-primary rounded-pill px-3 py-2" id="recipe-count">0 Recipes</span>
         </div>
@@ -61,23 +55,19 @@
                 <div class="modal-body p-4">
                     <div class="row">
                         <div class="col-md-5">
-                            <img id="view-image" src="" class="img-fluid rounded shadow-sm mb-3" alt="Recipe Image">
-                            <div class="p-3 bg-light rounded border">
-                                <p class="mb-1 small"><strong>👤 Created By:</strong> <span id="view-user"></span></p>
-                                <p class="mb-0 small text-muted"><strong>🕒 Uploaded On:</strong> <span id="view-time"></span></p>
+                            <img id="view-image" src="" class="img-fluid rounded shadow-sm mb-3">
+                            <div class="p-2 bg-light rounded small border">
+                                👤 Author: <span id="view-user"></span><br>
+                                🕒 Date: <span id="view-time"></span>
                             </div>
                         </div>
                         <div class="col-md-7">
                             <h5 class="fw-bold border-bottom pb-2">Ingredients</h5>
-                            <p id="view-ingredients" class="text-secondary" style="white-space: pre-line;"></p>
-                            
+                            <p id="view-ingredients" style="white-space: pre-line;"></p>
                             <h5 class="fw-bold border-bottom pb-2 mt-4">Method</h5>
-                            <p id="view-steps" class="text-secondary" style="white-space: pre-line;"></p>
+                            <p id="view-steps" style="white-space: pre-line;"></p>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
