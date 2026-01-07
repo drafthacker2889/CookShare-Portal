@@ -1,6 +1,6 @@
 /**
  * CookShare Integrated Cloud Logic - Final Production Version
- * Architecture: Azure Logic Apps + Cosmos DB + Blob Storage + SWA Auth
+ * Architecture: Azure Logic Apps + Cosmos DB + Blob Storage + AI Vision + App Insights
  */
 
 // --- 1. CONFIGURATION (Logic App Trigger URLs) ---
@@ -24,29 +24,30 @@ $(document).ready(async function() {
 
 // --- 3. IDENTITY & UTILITY FUNCTIONS ---
 
-/**
- * Fetches identity from Azure Static Web Apps built-in auth
- */
-// --- Identity Functions for Blob Storage ---
-
 function login() {
     const name = prompt("Please enter your name to simulate a login:");
     if (name && name.trim() !== "") {
-        localStorage.setItem("cookshare_user", name.trim());
-        // Track the login event in Azure
-        appInsights.trackEvent({ name: 'UserLogin', properties: { user: name } });
+        const username = name.trim();
+        localStorage.setItem("cookshare_user", username);
+        
+        // Advanced Feature: Telemetry Context
+        if (window.appInsights) {
+            appInsights.setAuthenticatedUserContext(username);
+            appInsights.trackEvent({ name: 'UserLogin', properties: { user: username } });
+        }
         location.reload();
     }
 }
 
 function logout() {
+    if (window.appInsights) {
+        appInsights.trackEvent({ name: 'UserLogout', properties: { user: currentUser } });
+        appInsights.clearAuthenticatedUserContext();
+    }
     localStorage.removeItem("cookshare_user");
     location.href = "index.html";
 }
 
-/**
- * Updated checkAuth to look at localStorage instead of Azure system routes
- */
 function checkAuth() {
     const savedUser = localStorage.getItem("cookshare_user");
     if (savedUser) {
@@ -54,83 +55,62 @@ function checkAuth() {
         $("#profile-name").text(currentUser);
         $("#loginLink").hide();
         $("#logoutLink").show();
+        if (window.appInsights) appInsights.setAuthenticatedUserContext(currentUser);
     } else {
         $("#loginLink").show();
         $("#logoutLink").hide();
     }
 }
-/**
- * Formats Azure Cosmos _ts to human-readable date
- */
+
 function formatTime(unixTs) {
     if(!unixTs) return "Recently Uploaded";
     return new Date(unixTs * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/**
- * Sanitizes strings for HTML onclick events to prevent JS crashes
- */
 function cleanString(str) {
     if (!str) return "";
-    return String(str)
-        .replace(/'/g, "\\'")   // Escape single quotes
-        .replace(/\n/g, "\\n")  // Preserve newlines for display
-        .replace(/\r/g, "");
+    return String(str).replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "");
 }
 
 // --- 4. DATA OPERATIONS ---
 
-// READ & INITIAL FILTER
 async function fetchAll() {
     try {
         const response = await fetch(URL_READ);
-        // CRITICAL: We must wait for the JSON and store it in allRecipes
         allRecipes = await response.json(); 
-        console.log("Data loaded from Azure:", allRecipes.length); // Debug check
-
-        // Initial render based on the page type
         applyPageFilter(); 
     } catch (e) {
+        if (window.appInsights) appInsights.trackException({ exception: e });
         console.error("Fetch Error:", e);
         $("#gallery").html("<p class='text-danger text-center'>Error connecting to Azure Cosmos DB.</p>");
     }
 }
 
-// Handles Home vs Profile view
 function applyPageFilter() {
     let dataToShow = [...allRecipes];
-
     if (window.location.pathname.endsWith('profile.html')) {
-        // Show only current user's recipes OR the demo ID recipes
         dataToShow = allRecipes.filter(r => r.userId === currentUser || r.userId === "user-789");
         $("#recipe-count").text(`${dataToShow.length} Recipes`);
     }
-    
     renderRecipes(dataToShow);
 }
 
-// SEARCH: Real-time filtering
 function filterRecipes() {
     const query = $("#recipeSearch").val().toLowerCase().trim();
-    
     const filtered = allRecipes.filter(recipe => {
         const title = String(recipe.title || "").toLowerCase();
         const ingredients = String(recipe.ingredients || "").toLowerCase();
         const matchesQuery = title.includes(query) || ingredients.includes(query);
-        
-        // Ensure profile view only shows user data
         const isProfilePage = window.location.pathname.endsWith('profile.html');
         const isOwner = !isProfilePage || (recipe.userId === currentUser || recipe.userId === "user-789");
-
         return matchesQuery && isOwner;
     });
-
     renderRecipes(filtered);
 }
 
-// CREATE
 async function uploadRecipe() {
     const file = document.getElementById("recipeImage").files[0];
+    const title = $("#recipeTitle").val();
     let imgUrl = DEFAULT_IMG;
     $("#status").text("⏳ Uploading to Azure...");
 
@@ -150,18 +130,26 @@ async function uploadRecipe() {
         const recipe = { 
             id: "recipe-" + Date.now(), 
             userId: currentUser || "user-789", 
-            title: $("#recipeTitle").val(), 
+            title: title, 
             ingredients: $("#ingredients").val(), 
             steps: $("#steps").val(), 
             imageUrl: imgUrl 
         };
 
         await fetch(URL_CREATE, { method: "POST", body: JSON.stringify(recipe), headers: {"Content-Type":"application/json"}});
+        
+        // Tracking the Creation event
+        if (window.appInsights) {
+            appInsights.trackEvent({ name: 'RecipeCreated', properties: { title: title, user: currentUser } });
+        }
+        
         location.reload();
-    } catch (e) { $("#status").text("❌ Failed."); }
+    } catch (e) { 
+        if (window.appInsights) appInsights.trackException({ exception: e });
+        $("#status").text("❌ Failed."); 
+    }
 }
 
-// UPDATE (Upsert with image preservation)
 async function submitUpdate() {
     const data = { 
         id: $("#edit-id").val(), 
@@ -172,37 +160,45 @@ async function submitUpdate() {
         steps: $("#edit-steps").val() 
     };
 
-    await fetch(URL_UPDATE, { 
-        method: "POST", 
-        headers: {"Content-Type":"application/json"}, 
-        body: JSON.stringify(data)
-    });
-    location.reload();
+    try {
+        await fetch(URL_UPDATE, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(data)});
+        if (window.appInsights) appInsights.trackEvent({ name: 'RecipeUpdated', properties: { id: data.id } });
+        location.reload();
+    } catch (e) {
+        if (window.appInsights) appInsights.trackException({ exception: e });
+    }
 }
 
-// DELETE
 async function deleteRecipe(id, userId) {
-    if(!confirm("Are you sure? This deletes from Azure Cosmos DB.")) return;
-    await fetch(URL_DELETE, { 
-        method: "POST", 
-        headers: {"Content-Type":"application/json"}, 
-        body: JSON.stringify({id: String(id), userId: String(userId)})
-    });
-    fetchAll();
+    if(!confirm("Are you sure?")) return;
+    try {
+        await fetch(URL_DELETE, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({id: String(id), userId: String(userId)})});
+        if (window.appInsights) appInsights.trackEvent({ name: 'RecipeDeleted', properties: { id: id, user: currentUser } });
+        fetchAll();
+    } catch (e) {
+        if (window.appInsights) appInsights.trackException({ exception: e });
+    }
 }
 
 // --- 5. MODALS & UI ---
 
-function viewRecipe(title, ingredients, steps, imageUrl, userId, ts) {
-    const cleanIngredients = ingredients.replace(/\\n/g, '\n');
-    const cleanSteps = steps.replace(/\\n/g, '\n');
+function viewRecipe(title, ingredients, steps, imageUrl, userId, ts, aiDesc) {
+    // Tracking specific recipe interest
+    if (window.appInsights) {
+        appInsights.trackEvent({ name: 'ViewRecipeDetails', properties: { recipeTitle: title, viewedBy: currentUser || 'Guest' } });
+    }
+
     $("#view-title").text(title);
-    $("#view-ingredients").text(ingredients);
-    $("#view-steps").text(steps);
+    // Display fix for complex instructions
+    $("#view-ingredients").text(ingredients.replace(/\\n/g, '\n'));
+    $("#view-steps").text(steps.replace(/\\n/g, '\n'));
     $("#view-user").text(userId);
     $("#view-time").text(formatTime(ts));
     $("#view-image").attr("src", imageUrl || DEFAULT_IMG);
     
+    // Advanced Feature: AI Tagging Display
+    $("#view-ai").text(aiDesc || "Analyzing image features..."); 
+
     new bootstrap.Modal(document.getElementById('viewModal')).show();
 }
 
@@ -213,26 +209,25 @@ function editRecipe(id, userId, title, ingredients, steps, imageUrl) {
     $("#edit-title").val(title); 
     $("#edit-ingredients").val(ingredients); 
     $("#edit-steps").val(steps);
-    
     new bootstrap.Modal(document.getElementById('updateModal')).show();
 }
 
-// --- 6. RENDER ENGINE (3-Column Grid) ---
+// --- 6. RENDER ENGINE (Integrated with AI Vision) ---
 
 function renderRecipes(data) {
     const gallery = $("#gallery");
     gallery.empty();
 
     if (!data || data.length === 0) {
-        gallery.html("<div class='col-12 text-center text-muted'><p>No recipes found matching your criteria.</p></div>");
+        gallery.html("<div class='col-12 text-center text-muted'><p>No recipes found.</p></div>");
         return;
     }
 
-    // Sort Newest First
-    data.sort((a,b) => b._ts - a._ts).forEach(recipe => {
+    data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
         const sT = cleanString(recipe.title);
         const sI = cleanString(recipe.ingredients);
         const sS = cleanString(recipe.steps);
+        const sAI = cleanString(recipe.aiDescription); // Pull AI insight from database
         const img = recipe.imageUrl || DEFAULT_IMG;
         const ts = recipe._ts || 0;
 
@@ -248,7 +243,7 @@ function renderRecipes(data) {
         gallery.append(`
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow-sm border-0">
-                    <div style="cursor:pointer;" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts})">
+                    <div style="cursor:pointer;" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
                         <img src="${img}" class="card-img-top" style="height:180px; object-fit:cover;" onerror="this.src='${DEFAULT_IMG}'">
                         <div class="card-body pb-0">
                             <h6 class="card-title fw-bold mb-1">${recipe.title || "Untitled"}</h6>
