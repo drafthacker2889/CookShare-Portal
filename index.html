@@ -13,6 +13,7 @@
             <a class="navbar-brand fw-bold" href="index.html">🍳 CookShare</a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link active" href="index.html">Home</a>
+                <a class="nav-link" href="profile.html">My Profile</a>
                 <a class="nav-link" href="portal.html">Management Portal</a>
             </div>
         </div>
@@ -20,6 +21,17 @@
 
     <div class="container my-5">
         <h2 class="text-center mb-4 fw-bold">Explore Global Recipes</h2>
+
+        <div class="row mb-5 justify-content-center">
+            <div class="col-md-6">
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-white border-end-0">🔍</span>
+                    <input type="text" id="recipeSearch" class="form-control border-start-0" 
+                           placeholder="Search recipes by name or ingredient..." onkeyup="filterRecipes()">
+                </div>
+            </div>
+        </div>
+
         <div id="gallery" class="row">
             </div>
     </div>
@@ -31,13 +43,13 @@
                     <h5 class="modal-title" id="view-title">Recipe Details</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="row">
-                        <div class="col-md-5">
+                        <div class="col-md-5 text-center">
                             <img id="view-image" src="" class="img-fluid rounded shadow-sm mb-3">
-                            <div class="p-3 bg-light rounded small">
-                                <p class="mb-1"><strong>👤 Author:</strong> <span id="view-user"></span></p>
-                                <p class="mb-0 text-muted"><strong>🕒 Uploaded:</strong> <span id="view-time"></span></p>
+                            <div class="p-2 bg-light rounded small border">
+                                <strong>👤 Author:</strong> <span id="view-user"></span><br>
+                                <strong>🕒 Date:</strong> <span id="view-time"></span>
                             </div>
                         </div>
                         <div class="col-md-7">

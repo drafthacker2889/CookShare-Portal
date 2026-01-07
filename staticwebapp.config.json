@@ -1,0 +1,14 @@
+{
+  "routeRules": [
+    {
+      "route": "/portal.html",
+      "allowedRoles": ["administrator"]
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/github",
+      "statusCode": 302
+    }
+  }
+}
