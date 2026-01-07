@@ -97,18 +97,14 @@ function applyPageFilter() {
 
 // SEARCH: Real-time filtering
 function filterRecipes() {
-    // Get the search text and convert to lowercase for case-insensitive matching
     const query = $("#recipeSearch").val().toLowerCase().trim();
     
     const filtered = allRecipes.filter(recipe => {
-        // Convert fields to strings to prevent errors if they are null
         const title = String(recipe.title || "").toLowerCase();
         const ingredients = String(recipe.ingredients || "").toLowerCase();
-        
-        // Check for matches in either field
         const matchesQuery = title.includes(query) || ingredients.includes(query);
         
-        // Maintain page-specific visibility (Home vs Profile)
+        // Ensure profile view only shows user data
         const isProfilePage = window.location.pathname.endsWith('profile.html');
         const isOwner = !isProfilePage || (recipe.userId === currentUser || recipe.userId === "user-789");
 

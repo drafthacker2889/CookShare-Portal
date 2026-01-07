@@ -2,7 +2,7 @@
   "routeRules": [
     {
       "route": "/portal.html",
-      "allowedRoles": ["administrator"]
+      "allowedRoles": ["authenticated"]
     }
   ],
   "responseOverrides": {
