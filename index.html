@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CookShare - Global Recipes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="CSS/styles.css">
+
+    <script type="text/javascript">
+    !function(T,l,y){var S=T.location,k="script",D="instrumentationKey",C="ingestionendpoint",I="disableExceptionTracking",E="ai.device.",b="toLowerCase",a="crossOrigin",n="POST",t="stats";function r(e){var t=l.createElement(k);t.src=e,y.active&&y.src&&(t.setAttribute("data-ai-src",y.src),t.setAttribute("data-ai-active",y.active));var i=l.getElementsByTagName(k)[0];i.parentNode.insertBefore(t,i)}var i=function(){var e,t,i,a,n,r;return e="https://js.monitor.azure.com/scripts/b/ai.2.min.js",y.src=e,r={config:{
+        connectionString: "InstrumentationKey=369d34ba-11a5-4ad8-a1cd-f613f243a703;IngestionEndpoint=https://francecentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://francecentral.livediagnostics.monitor.azure.com/;ApplicationId=1ed3c574-cbf5-4a8e-bd97-70d7b4c833a6"
+    }},(t=T[y.name||"appInsights"])&&(t.appInsightsNew?t.appInsightsNew(r):t.initialize&&t.initialize(r,t.queue||[])),r}();window[y.name||"appInsights"]=i,i.queue&&0===i.queue.length&&i.trackPageView({})
+    }(window,document,{
+        name: "appInsights"
+    });
+    </script>
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
@@ -34,8 +43,7 @@
             </div>
         </div>
 
-        <div id="gallery" class="row">
-            </div>
+        <div id="gallery" class="row"></div>
     </div>
 
     <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">

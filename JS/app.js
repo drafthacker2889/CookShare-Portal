@@ -27,37 +27,15 @@ $(document).ready(async function() {
 /**
  * Fetches identity from Azure Static Web Apps built-in auth
  */
-async function checkAuth() {
-    // Look for a saved user in the browser memory
-    const savedUser = localStorage.getItem("cookshare_user");
-
-    if (savedUser) {
-        currentUser = savedUser; // Set the global user variable
-        $("#profile-name").text(currentUser);
-        $("#profile-email").text("Logged in via CookShare Mock Auth");
-        
-        // UI Updates
-        $("#login-required").addClass("d-none");
-        $("#logoutLink").show();
-        $("#loginLink").hide();
-    } else {
-        // UI Updates for Guests
-        $("#login-required").removeClass("d-none");
-        $("#logoutLink").hide();
-        $("#loginLink").show();
-        
-        // If they are on the Profile page but not logged in, redirect them or show a message
-        if (window.location.pathname.endsWith('profile.html')) {
-            $("#gallery").html("<div class='col-12 text-center'><p class='alert alert-warning'>Please log in to see your recipes.</p></div>");
-        }
-    }
-}
+// --- Identity Functions for Blob Storage ---
 
 function login() {
-    const name = prompt("Please enter your name/email to simulate a login:");
+    const name = prompt("Please enter your name to simulate a login:");
     if (name && name.trim() !== "") {
         localStorage.setItem("cookshare_user", name.trim());
-        location.reload(); // Refresh to apply identity
+        // Track the login event in Azure
+        appInsights.trackEvent({ name: 'UserLogin', properties: { user: name } });
+        location.reload();
     }
 }
 
@@ -66,6 +44,21 @@ function logout() {
     location.href = "index.html";
 }
 
+/**
+ * Updated checkAuth to look at localStorage instead of Azure system routes
+ */
+function checkAuth() {
+    const savedUser = localStorage.getItem("cookshare_user");
+    if (savedUser) {
+        currentUser = savedUser;
+        $("#profile-name").text(currentUser);
+        $("#loginLink").hide();
+        $("#logoutLink").show();
+    } else {
+        $("#loginLink").show();
+        $("#logoutLink").hide();
+    }
+}
 /**
  * Formats Azure Cosmos _ts to human-readable date
  */
@@ -81,8 +74,8 @@ function cleanString(str) {
     if (!str) return "";
     return String(str)
         .replace(/'/g, "\\'")   // Escape single quotes
-        .replace(/\n/g, " ")    // Replace newlines with spaces
-        .replace(/\r/g, " ");
+        .replace(/\n/g, "\\n")  // Preserve newlines for display
+        .replace(/\r/g, "");
 }
 
 // --- 4. DATA OPERATIONS ---
@@ -201,6 +194,8 @@ async function deleteRecipe(id, userId) {
 // --- 5. MODALS & UI ---
 
 function viewRecipe(title, ingredients, steps, imageUrl, userId, ts) {
+    const cleanIngredients = ingredients.replace(/\\n/g, '\n');
+    const cleanSteps = steps.replace(/\\n/g, '\n');
     $("#view-title").text(title);
     $("#view-ingredients").text(ingredients);
     $("#view-steps").text(steps);
