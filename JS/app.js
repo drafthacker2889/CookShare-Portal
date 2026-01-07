@@ -28,21 +28,42 @@ $(document).ready(async function() {
  * Fetches identity from Azure Static Web Apps built-in auth
  */
 async function checkAuth() {
-    try {
-        const response = await fetch("/.auth/me");
-        const payload = await response.json();
-        if (payload.clientPrincipal) {
-            currentUser = payload.clientPrincipal.userDetails;
-            $("#profile-name").text(currentUser);
-            $("#profile-email").text(`Verified via ${payload.clientPrincipal.identityProvider}`);
-            $("#login-required").addClass("d-none");
-        } else {
-            $("#login-required").removeClass("d-none");
-            $("#logoutLink").hide();
+    // Look for a saved user in the browser memory
+    const savedUser = localStorage.getItem("cookshare_user");
+
+    if (savedUser) {
+        currentUser = savedUser; // Set the global user variable
+        $("#profile-name").text(currentUser);
+        $("#profile-email").text("Logged in via CookShare Mock Auth");
+        
+        // UI Updates
+        $("#login-required").addClass("d-none");
+        $("#logoutLink").show();
+        $("#loginLink").hide();
+    } else {
+        // UI Updates for Guests
+        $("#login-required").removeClass("d-none");
+        $("#logoutLink").hide();
+        $("#loginLink").show();
+        
+        // If they are on the Profile page but not logged in, redirect them or show a message
+        if (window.location.pathname.endsWith('profile.html')) {
+            $("#gallery").html("<div class='col-12 text-center'><p class='alert alert-warning'>Please log in to see your recipes.</p></div>");
         }
-    } catch (e) {
-        console.warn("Auth unavailable locally. Defaulting to Guest.");
     }
+}
+
+function login() {
+    const name = prompt("Please enter your name/email to simulate a login:");
+    if (name && name.trim() !== "") {
+        localStorage.setItem("cookshare_user", name.trim());
+        location.reload(); // Refresh to apply identity
+    }
+}
+
+function logout() {
+    localStorage.removeItem("cookshare_user");
+    location.href = "index.html";
 }
 
 /**
