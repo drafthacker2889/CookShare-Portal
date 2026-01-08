@@ -1,8 +1,3 @@
-/**
- * CookShare Integrated Cloud Logic - Final Production Version
- * Architecture: Azure Logic Apps + Cosmos DB + Blob Storage + AI Vision + App Insights
- */
-
 // --- 1. CONFIGURATION (Logic App Trigger URLs) ---
 const URL_READ   = "https://prod-20.francecentral.logic.azure.com:443/workflows/97adc7bda82940938131373870d1d893/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=5cIjL8PPtplu1RnkzyMz0eA-rmqz-uHWp4xH2XDLYqs";
 const URL_CREATE = "https://prod-12.francecentral.logic.azure.com:443/workflows/8a1b2b512a5b4d87a2e940a22ab794da/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=b-CxHzyro6WTRaa9a5LsKT40srSikqolXrgxJDbpTnk";
@@ -18,8 +13,8 @@ let currentUser = null;
 
 // --- 2. INITIALIZATION ---
 $(document).ready(async function() {
-    await checkAuth(); // Check user identity first
-    fetchAll();        // Then load data from Azure
+    await checkAuth(); 
+    fetchAll();        
 });
 
 // --- 3. IDENTITY & UTILITY FUNCTIONS ---
@@ -230,26 +225,23 @@ function renderRecipes(data) {
 
     data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
         const sT = cleanString(recipe.title || "Untitled");
-        
-        // Use raw strings for Modal/Edit but clean them for the Tile Preview
         const rawIngredients = cleanString(recipe.ingredients || "");
         const rawSteps = cleanString(recipe.steps || "");
-        
-        // Preview: Replace literal \n with a space so the card stays tidy
         const previewIngredients = rawIngredients.replace(/\\n/g, ' ').substring(0, 60) + "...";
-
         const sAI = cleanString(recipe.aiDescription || "No AI insight available.");
-        const img = recipe.imageUrl || DEFAULT_IMG;
+        const originalImg = recipe.imageUrl || DEFAULT_IMG; 
         const ts = recipe._ts || 0;
 
-        // Tile Insight: Replace literal \n with <br> and strip for short preview
+        // 1. Generate the thumbnail URL
+        const thumbImg = originalImg.replace('/media/', '/thumbnails/');
+
         const cleanAI = sAI.replace(/\\n/g, '<br>');
 
         let adminButtons = '';
         if (isPortal) {
             adminButtons = `
                 <div class="mt-3 text-center border-top pt-2">
-                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${rawIngredients}','${rawSteps}','${img}')">Edit</button>
+                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${rawIngredients}','${rawSteps}','${originalImg}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteRecipe('${recipe.id}','${recipe.userId}')">Delete</button>
                 </div>`;
         }
@@ -258,8 +250,11 @@ function renderRecipes(data) {
             <div class="col-md-4 mb-4 recipe-card-wrapper">
                 <div class="card h-100 shadow-sm border-0">
                     <div style="overflow:hidden; border-radius: 15px 15px 0 0;">
-                        <img src="${img}" class="card-img-top" style="height:200px; object-fit:cover; cursor:pointer;" 
-                             onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                        <img src="${thumbImg}" 
+                             class="card-img-top" 
+                             style="height:200px; object-fit:cover; cursor:pointer;" 
+                             onerror="this.onerror=null;this.src='${originalImg}';"
+                             onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${originalImg}','${recipe.userId}',${ts},'${sAI}')">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h6 class="recipe-title fw-bold mb-1">${sT}</h6>
@@ -272,7 +267,7 @@ function renderRecipes(data) {
                         </p>
                         <div class="d-grid mt-auto">
                             <button class="btn btn-outline-primary btn-view btn-sm" 
-                                onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                                onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${originalImg}','${recipe.userId}',${ts},'${sAI}')">
                                 View Details
                             </button>
                         </div>
@@ -282,7 +277,6 @@ function renderRecipes(data) {
             </div>`);
     });
 }
-
 // --- 7. SEARCH LOGIC (Split Key for GitHub Protection) ---
 async function executeSearch() {
     const query = document.getElementById('searchInput').value.trim();
