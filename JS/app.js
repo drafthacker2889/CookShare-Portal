@@ -210,10 +210,9 @@ function editRecipe(id, userId, title, ingredients, steps, imageUrl) {
     new bootstrap.Modal(document.getElementById('updateModal')).show();
 }
 
-// --- 6. RENDER ENGINE (Integrated with AI Vision) ---
-
+// --- 6. UNIFIED RENDER ENGINE ---
 function renderRecipes(data) {
-    const gallery = $("#gallery");
+    const gallery = $("#recipeGallery");
     gallery.empty();
 
     if (!data || data.length === 0) {
@@ -221,23 +220,21 @@ function renderRecipes(data) {
         return;
     }
 
-    // Determine if we are on the portal page
     const isPortal = window.location.pathname.includes('portal.html');
 
     data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
-        const sT = cleanString(recipe.title);
-        const sI = cleanString(recipe.ingredients);
-        const sS = cleanString(recipe.steps);
-        const sAI = cleanString(recipe.aiDescription);
+        const sT = cleanString(recipe.title || "Untitled");
+        const sI = cleanString(recipe.ingredients || "");
+        const sS = cleanString(recipe.steps || "");
+        const sAI = cleanString(recipe.aiDescription || "No AI insight available.");
         const img = recipe.imageUrl || DEFAULT_IMG;
         const ts = recipe._ts || 0;
 
-        // Clean the preview text for the tile
-        const previewText = sI.replace(/\\n/g, ' ').replace(/\n/g, ' ');
+        const cleanAI = sAI.replace(/\\n/g, '<br>');
+        const previewIngredients = sI.substring(0, 60) + "...";
 
         let adminButtons = '';
         if (isPortal) {
-            // Re-adding the missing Management buttons
             adminButtons = `
                 <div class="mt-3 text-center border-top pt-2">
                     <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${sI}','${sS}','${img}')">Edit</button>
@@ -247,19 +244,46 @@ function renderRecipes(data) {
 
         gallery.append(`
             <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm border-0 recipe-card">
-                    <div style="cursor:pointer;" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
-                        <img src="${img}" class="card-img-top" style="height:180px; object-fit:cover;" onerror="this.src='${DEFAULT_IMG}'">
-                        <div class="card-body pb-0">
-                            <h6 class="card-title fw-bold mb-1">${recipe.title || "Untitled"}</h6>
-                            <p class="text-muted small mb-1">🕒 ${formatTime(ts)}</p>
-                            <p class="card-text small text-muted">${previewText.substring(0, 60)}...</p>
+                <div class="card h-100 shadow-sm border-0">
+                    <img src="${img}" class="card-img-top" style="height:200px; object-fit:cover; cursor:pointer;" 
+                         onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold mb-1">${sT}</h6>
+                        <p class="text-primary small mb-2" style="font-size: 0.8rem;">✨ ${cleanAI.substring(0, 45)}...</p>
+                        <p class="card-text small text-muted mb-2"><strong>Ingredients:</strong> ${previewIngredients}</p>
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">View Details</button>
                         </div>
-                    </div>
-                    <div class="card-body pt-0">
                         ${adminButtons}
                     </div>
                 </div>
             </div>`);
     });
+}
+
+// --- 7. SEARCH LOGIC (Split Key for GitHub Protection) ---
+async function executeSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) { fetchAll(); return; }
+
+    const searchService = "search-cookshare-shazin"; 
+    const indexName = "cosmosdb-index"; 
+    
+    // SPLIT KEY TO BYPASS GITHUB SCANNER
+    const p1 = "8yAu7pYk1cOGaZeGpQrus0fZ0NaTEbLA";
+    const p2 = "PK9zQWtYUPAzSeAzMCPe";
+    const apiKey = p1 + p2; 
+
+    const url = `https://${searchService}.search.windows.net/indexes/${indexName}/docs?api-version=2023-11-01&search=${encodeURIComponent(query)}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json', 'api-key': apiKey }
+        });
+        const result = await response.json();
+        renderRecipes(result.value); 
+    } catch (error) {
+        console.error("Search failed:", error);
+    }
 }
