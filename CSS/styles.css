@@ -27,3 +27,66 @@
 /* Status message colors */
 .status-success { color: #28a745; font-weight: bold; }
 .status-error { color: #dc3545; font-weight: bold; }
+
+/* --- Modern Recipe Tile UI --- */
+
+#recipeGallery {
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 20px;
+}
+
+.recipe-card-wrapper {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.recipe-card-wrapper:hover {
+    transform: translateY(-8px); /* Lift effect on hover */
+}
+
+.card {
+    border-radius: 15px !important;
+    overflow: hidden;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.card-img-top {
+    transition: transform 0.5s ease;
+}
+
+.recipe-card-wrapper:hover .card-img-top {
+    transform: scale(1.1); /* Subtle zoom into the food on hover */
+}
+
+/* Style the AI Insight badge */
+.ai-badge {
+    background-color: #f0f7ff;
+    color: #007bff;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.recipe-title {
+    font-size: 1.1rem;
+    color: #2d3436;
+    height: 2.8rem; /* Keeps titles aligned even if one is longer */
+    overflow: hidden;
+}
+
+.btn-view {
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-view:hover {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+}

@@ -224,35 +224,50 @@ function renderRecipes(data) {
 
     data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
         const sT = cleanString(recipe.title || "Untitled");
-        const sI = cleanString(recipe.ingredients || "");
+        
+        // FIX: Replace literal \\n with a space for the tile preview so it looks clean
+        const rawIngredients = cleanString(recipe.ingredients || "");
+        const previewIngredients = rawIngredients.replace(/\\n/g, ' ').substring(0, 60) + "...";
+
         const sS = cleanString(recipe.steps || "");
         const sAI = cleanString(recipe.aiDescription || "No AI insight available.");
         const img = recipe.imageUrl || DEFAULT_IMG;
         const ts = recipe._ts || 0;
 
+        // FIX: Replace literal \\n with <br> for the AI insight
         const cleanAI = sAI.replace(/\\n/g, '<br>');
-        const previewIngredients = sI.substring(0, 60) + "...";
 
         let adminButtons = '';
         if (isPortal) {
             adminButtons = `
                 <div class="mt-3 text-center border-top pt-2">
-                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${sI}','${sS}','${img}')">Edit</button>
+                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${rawIngredients}','${sS}','${img}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteRecipe('${recipe.id}','${recipe.userId}')">Delete</button>
                 </div>`;
         }
 
+        // Updated Template with new CSS classes for better styling
         gallery.append(`
-            <div class="col-md-4 mb-4">
+            <div class="col-md-4 mb-4 recipe-card-wrapper">
                 <div class="card h-100 shadow-sm border-0">
-                    <img src="${img}" class="card-img-top" style="height:200px; object-fit:cover; cursor:pointer;" 
-                         onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
-                    <div class="card-body">
-                        <h6 class="card-title fw-bold mb-1">${sT}</h6>
-                        <p class="text-primary small mb-2" style="font-size: 0.8rem;">✨ ${cleanAI.substring(0, 45)}...</p>
-                        <p class="card-text small text-muted mb-2"><strong>Ingredients:</strong> ${previewIngredients}</p>
-                        <div class="d-grid">
-                            <button class="btn btn-outline-primary btn-sm" onclick="viewRecipe('${sT}','${sI}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">View Details</button>
+                    <div style="overflow:hidden; border-radius: 15px 15px 0 0;">
+                        <img src="${img}" class="card-img-top" style="height:200px; object-fit:cover; cursor:pointer;" 
+                             onclick="viewRecipe('${sT}','${rawIngredients}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="recipe-title fw-bold mb-1">${sT}</h6>
+                        <div class="ai-badge mb-2">
+                             <strong>AI Insight:</strong><br>
+                            ${cleanAI.substring(0, 45)}...
+                        </div>
+                        <p class="card-text small text-muted mb-3">
+                            <strong>Ingredients:</strong> ${previewIngredients}
+                        </p>
+                        <div class="d-grid mt-auto">
+                            <button class="btn btn-outline-primary btn-view btn-sm" 
+                                onclick="viewRecipe('${sT}','${rawIngredients}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                                View Details
+                            </button>
                         </div>
                         ${adminButtons}
                     </div>
