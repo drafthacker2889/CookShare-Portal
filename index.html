@@ -48,34 +48,38 @@
             </div>
     </div>
 
-    <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="view-title">Recipe Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="row">
-                        <div class="col-md-5 text-center">
-                            <img id="view-image" src="" class="img-fluid rounded shadow-sm mb-3">
-                            <div class="p-2 bg-light rounded small border">
-                                <strong>👤 Author:</strong> <span id="view-user"></span><br>
-                                <strong>🕒 Date:</strong> <span id="view-time"></span>
-                            </div>
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="view-title">Recipe Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="printable-area">
+                <div class="row">
+                    <div class="col-md-5 text-center">
+                        <img id="view-image" src="" class="img-fluid rounded shadow-sm mb-3">
+                        <div class="p-2 bg-light rounded small border">
+                            👤 Author: <span id="view-user"></span><br>
+                            🕒 Date: <span id="view-time"></span>
                         </div>
-                        <div class="col-md-7">
-                            <p class="text-primary small mb-1"><strong>AI insight:</strong> <span id="view-ai"></span></p>
-                            <h5 class="fw-bold border-bottom pb-2">Ingredients</h5>
-                            <p id="view-ingredients" style="white-space: pre-line;"></p>
-                            <h5 class="fw-bold border-bottom pb-2 mt-4">Method</h5>
-                            <p id="view-steps" style="white-space: pre-line;"></p>
-                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p class="text-primary small mb-1"><strong>AI insight:</strong> <span id="view-ai"></span></p>
+                        <h5 class="fw-bold border-bottom pb-2">Ingredients</h5>
+                        <p id="view-ingredients" style="white-space: pre-line;"></p>
+                        <h5 class="fw-bold border-bottom pb-2 mt-4">Method</h5>
+                        <p id="view-steps" style="white-space: pre-line;"></p>
                     </div>
                 </div>
             </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="printRecipeCard()">Download PDF / Print</button>
+            </div>
         </div>
     </div>
+</div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

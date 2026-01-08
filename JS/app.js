@@ -184,22 +184,28 @@ async function deleteRecipe(id, userId) {
 
 function viewRecipe(title, ingredients, steps, imageUrl, userId, ts, aiDesc) {
     if (window.appInsights) {
-        appInsights.trackEvent({ name: 'ViewRecipeDetails', properties: { recipeTitle: title, viewedBy: currentUser || 'Guest' } });
+        appInsights.trackEvent({ name: 'ViewRecipeDetails', properties: { recipeTitle: title, viewedBy: typeof currentUser !== 'undefined' ? currentUser : 'Guest' } });
     }
 
     $("#view-title").text(title);
 
-    // JS Fix: Replace characters and use .html()
-    $("#view-ingredients").html(ingredients.replace(/\n/g, '<br>'));
-    $("#view-steps").html(steps.replace(/\n/g, '<br>'));
+    const formattedIngredients = ingredients.replace(/\\n/g, '<br>');
+    const formattedSteps = steps.replace(/\\n/g, '<br>');
+    const formattedAI = aiDesc.replace(/\\n/g, '<br>');
+
+    $("#view-ingredients").html(formattedIngredients);
+    $("#view-steps").html(formattedSteps);
+    $("#view-ai").html(formattedAI); 
     
     $("#view-user").text(userId);
     $("#view-time").text(formatTime(ts));
     $("#view-image").attr("src", imageUrl || DEFAULT_IMG);
-    $("#view-ai").text(aiDesc || "Analyzing image features..."); 
 
-    new bootstrap.Modal(document.getElementById('viewModal')).show();
+    const modalElement = document.getElementById('viewModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+    modalInstance.show();
 }
+
 function editRecipe(id, userId, title, ingredients, steps, imageUrl) {
     $("#edit-id").val(id); 
     $("#edit-userId").val(userId); 
@@ -225,34 +231,35 @@ function renderRecipes(data) {
     data.sort((a,b) => (b._ts || 0) - (a._ts || 0)).forEach(recipe => {
         const sT = cleanString(recipe.title || "Untitled");
         
-        // FIX: Replace literal \\n with a space for the tile preview so it looks clean
+        // Use raw strings for Modal/Edit but clean them for the Tile Preview
         const rawIngredients = cleanString(recipe.ingredients || "");
+        const rawSteps = cleanString(recipe.steps || "");
+        
+        // Preview: Replace literal \n with a space so the card stays tidy
         const previewIngredients = rawIngredients.replace(/\\n/g, ' ').substring(0, 60) + "...";
 
-        const sS = cleanString(recipe.steps || "");
         const sAI = cleanString(recipe.aiDescription || "No AI insight available.");
         const img = recipe.imageUrl || DEFAULT_IMG;
         const ts = recipe._ts || 0;
 
-        // FIX: Replace literal \\n with <br> for the AI insight
+        // Tile Insight: Replace literal \n with <br> and strip for short preview
         const cleanAI = sAI.replace(/\\n/g, '<br>');
 
         let adminButtons = '';
         if (isPortal) {
             adminButtons = `
                 <div class="mt-3 text-center border-top pt-2">
-                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${rawIngredients}','${sS}','${img}')">Edit</button>
+                    <button class="btn btn-warning btn-sm me-1" onclick="editRecipe('${recipe.id}','${recipe.userId}','${sT}','${rawIngredients}','${rawSteps}','${img}')">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteRecipe('${recipe.id}','${recipe.userId}')">Delete</button>
                 </div>`;
         }
 
-        // Updated Template with new CSS classes for better styling
         gallery.append(`
             <div class="col-md-4 mb-4 recipe-card-wrapper">
                 <div class="card h-100 shadow-sm border-0">
                     <div style="overflow:hidden; border-radius: 15px 15px 0 0;">
                         <img src="${img}" class="card-img-top" style="height:200px; object-fit:cover; cursor:pointer;" 
-                             onclick="viewRecipe('${sT}','${rawIngredients}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                             onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${img}','${recipe.userId}',${ts},'${sAI}')">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h6 class="recipe-title fw-bold mb-1">${sT}</h6>
@@ -265,7 +272,7 @@ function renderRecipes(data) {
                         </p>
                         <div class="d-grid mt-auto">
                             <button class="btn btn-outline-primary btn-view btn-sm" 
-                                onclick="viewRecipe('${sT}','${rawIngredients}','${sS}','${img}','${recipe.userId}',${ts},'${sAI}')">
+                                onclick="viewRecipe('${sT}','${rawIngredients}','${rawSteps}','${img}','${recipe.userId}',${ts},'${sAI}')">
                                 View Details
                             </button>
                         </div>
@@ -301,4 +308,101 @@ async function executeSearch() {
     } catch (error) {
         console.error("Search failed:", error);
     }
+}
+
+function printRecipe() {
+    const title = $("#view-title").text();
+    const ingredients = $("#view-ingredients").html();
+    const steps = $("#view-steps").html();
+    const img = $("#view-image").attr("src");
+    const ai = $("#view-ai").text();
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>CookShare - ${title}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { padding: 40px; font-family: sans-serif; }
+                    img { max-width: 300px; border-radius: 10px; margin-bottom: 20px; }
+                    .ai-box { background: #f0f7ff; padding: 10px; border-radius: 5px; margin: 20px 0; border-left: 5px solid #007bff; }
+                </style>
+            </head>
+            <body>
+                <h1>🍳 CookShare Recipe: ${title}</h1>
+                <img src="${img}">
+                <div class="ai-box"><strong>✨ AI Robot Insight:</strong><br>${ai}</div>
+                <h3>Ingredients</h3>
+                <p>${ingredients}</p>
+                <hr>
+                <h3>Method</h3>
+                <p>${steps}</p>
+                <footer style="margin-top:50px; font-size: 0.8rem; color: gray;">Generated by CookShare Portal - 2026</footer>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function printRecipeCard() {
+    // Get values from the modal
+    const title = $("#view-title").text();
+    const ingredients = $("#view-ingredients").html();
+    const steps = $("#view-steps").html();
+    const imgUrl = $("#view-image").attr("src");
+    const author = $("#view-user").text();
+    const aiDesc = $("#view-ai").text();
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>CookShare - ${title}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    .recipe-header { border-bottom: 2px solid #0d6efd; margin-bottom: 20px; padding-bottom: 10px; }
+                    .recipe-img { max-width: 300px; border-radius: 15px; margin-bottom: 20px; }
+                    .ai-box { background: #e7f1ff; padding: 15px; border-radius: 10px; font-style: italic; margin-bottom: 20px; }
+                    @media print { .no-print { display: none; } }
+                </style>
+            </head>
+            <body>
+                <div class="recipe-header">
+                    <h1 class="text-primary">🍳 CookShare Recipe</h1>
+                    <h2>${title}</h2>
+                    <p class="text-muted">By: ${author}</p>
+                </div>
+                
+                <img src="${imgUrl}" class="recipe-img">
+                
+                <div class="ai-box">
+                    <strong> AI Insights:</strong><br>
+                    ${aiDesc}
+                </div>
+
+                <h4 class="fw-bold">Ingredients</h4>
+                <p style="white-space: pre-line;">${ingredients}</p>
+
+                <h4 class="fw-bold mt-4">Instructions</h4>
+                <p style="white-space: pre-line;">${steps}</p>
+
+                <footer class="mt-5 small text-center text-muted border-top pt-3">
+                    Printed from CookShare Cloud Portal - 2026
+                </footer>
+            </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    
+    // Wait for the image to load before printing
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
 }

@@ -90,3 +90,7 @@
     color: white;
     box-shadow: 0 4px 10px rgba(0,123,255,0.3);
 }
+
+#view-ingredients, #view-steps {
+    white-space: pre-line; /* Automatically turns \n into new lines */
+}
